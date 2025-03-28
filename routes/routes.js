@@ -9,7 +9,6 @@ import PDFParser from "pdf2json";
 
 const router = Router();
 
-// Маршрут для анализа URL
 router.post("/analyze", async (req, res) => {
 	const {query} = req.body;
 	try {
@@ -61,7 +60,7 @@ router.post("/analyze", async (req, res) => {
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: {
-		fileSize: 10 * 1024 * 1024, // Максимальный размер файла 10 МБ
+		fileSize: 10 * 1024 * 1024,
 	},
 	fileFilter: (req, file, cb) => {
 		if (file.mimetype === "application/pdf") {
@@ -78,10 +77,8 @@ router.post("/analyze-pdf", upload.single("pdf"), async (req, res) => {
 			return res.status(400).json({ error: "Файл не предоставлен." });
 		}
 
-		// Отладка: проверяем, что буфер доступен
 		console.log("Размер буфера файла:", req.file.buffer.length, "байт");
 
-		// Извлечение текста из PDF с помощью pdf2json
 		const pdfParser = new PDFParser();
 		const pdfBuffer = req.file.buffer;
 
@@ -90,12 +87,11 @@ router.post("/analyze-pdf", upload.single("pdf"), async (req, res) => {
 				reject(new Error(`Ошибка парсинга PDF: ${err.message}`))
 			);
 			pdfParser.on("pdfParser_dataReady", (pdfData) => {
-				// Извлечение текста
+
 				let textContent = pdfParser.getRawTextContent()
-					.replace(/[^\x20-\x7E]/g, "") // Удаляем нечитаемые символы
+					.replace(/[^\x20-\x7E]/g, "")
 					.trim();
 
-				// Ограничение текста (примерно 2000 символов)
 				const maxTextLength = 2000;
 				if (textContent.length > maxTextLength) {
 					textContent = textContent.substring(0, maxTextLength) + "...";
@@ -111,10 +107,9 @@ router.post("/analyze-pdf", upload.single("pdf"), async (req, res) => {
 			pdfParser.parseBuffer(pdfBuffer);
 		})
 			.then(async (textContent) => {
-				// Анализ текста с помощью DeepSeek (через контроллер)
+
 				const analysis = await analyzePDFWithOpenAI(textContent);
 
-				// Форматируем результат
 				let formattedAnalysis;
 				try {
 					const parsedAnalysis = JSON.parse(analysis);

@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const getOpenAI = async (url) => {
-	// Проверка входных данных
+
 	if (!url || typeof url !== "string" || !url.startsWith("http")) {
 		throw new Error("Invalid URL provided");
 	}
@@ -14,7 +14,6 @@ export const getOpenAI = async (url) => {
 		baseURL: "https://openrouter.ai/api/v1",
 	});
 
-	// Разделим запрос на части
 	const promptParts = [
 		// Часть 1: Базовая информация и SEO
 		`
@@ -199,7 +198,7 @@ export const getOpenAI = async (url) => {
 				model: "deepseek/deepseek-r1:free",
 				messages: [{ role: "user", content: prompt }],
 				temperature: 0.3,
-				max_tokens: 1500, // Уменьшаем токены для каждой части
+				max_tokens: 1500,
 				response_format: { type: "json_object" },
 			});
 
@@ -210,7 +209,6 @@ export const getOpenAI = async (url) => {
 
 			let parsedContent;
 
-			// Универсальная обработка: markdown или чистый JSON
 			try {
 				const jsonMatch = content.match(/```json\s*([\s\S]*?)(?:\s*```|$)/);
 				if (jsonMatch) {
@@ -223,14 +221,12 @@ export const getOpenAI = async (url) => {
 			} catch (parseError) {
 				console.error("Failed to parse content as JSON:", parseError.message);
 				console.log("Raw content:", content);
-				continue; // Пропускаем часть при ошибке
+				continue;
 			}
 
-			// Обновляем финальный ответ
 			Object.assign(finalResponse, parsedContent);
 		}
 
-		// Проверяем и дополняем структуру
 		const validatedResponse = transformToSchema(finalResponse, url);
 		console.log("Final response:", JSON.stringify(validatedResponse, null, 2));
 
@@ -241,7 +237,6 @@ export const getOpenAI = async (url) => {
 	}
 };
 
-// Дефолтная структура для ошибок (без изменений)
 function getDefaultAnalysis(url) {
 	return {
 		url,
@@ -300,7 +295,6 @@ function getDefaultAnalysis(url) {
 	};
 }
 
-// Проверка и дополнение структуры (без изменений)
 function transformToSchema(rawData, url) {
 	const defaultResponse = getDefaultAnalysis(url);
 
