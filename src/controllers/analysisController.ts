@@ -23,6 +23,7 @@ interface TaskStatusResponse extends Task {
 	error?: string;
 }
 
+
 export const startAnalysis = async (req: Request<{}, {}, StartAnalysisRequestBody>, res: Response<StartAnalysisResponse>) => {
 	try {
 		const { query } = req.body;
@@ -73,11 +74,19 @@ export const getAnalysis: (req: Request, res: Response, next: NextFunction) => v
 	}
 };
 
-export const getHistory: (req: Request, res: Response, next: NextFunction) => void = async (
-	req: Request,
-	res: Response,
-	next: NextFunction
-) => {
+export const getAllAnalyses = async (req: Request, res: Response) => {
+	try {
+		const analyses = await prisma.analysis.findMany({
+			select: { id: true, url: true, createdAt: true, data: true },
+		});
+		res.status(200).json(analyses);
+	} catch (error) {
+		logger.error(`Error fetching all analyses: ${(error as Error).message}`);
+		res.status(500).json({ error: "Failed to fetch all analyses" });
+	}
+};
+
+export const getHistory = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const userId = req.user?.userId;
 		const analyses = await prisma.analysis.findMany({
