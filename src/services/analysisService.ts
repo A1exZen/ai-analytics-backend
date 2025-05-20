@@ -8,8 +8,6 @@ import prisma from "../db.js";
 import {v4 as uuidv4} from "uuid";
 import {Request} from "express";
 import {getLighthouseAnalysis} from "./lighthouseService.js";
-import {getSecurityHeadersAnalysis} from "./securityHeadersService.js";
-import {getVirusTotalAnalysis} from "./virusTotalService.js";
 
 interface AppError extends Error {
 	statusCode: number;

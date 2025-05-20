@@ -5,11 +5,12 @@ import jwt from "jsonwebtoken";
 import prisma from "../db.js";
 import bcrypt from "bcrypt";
 
-export const register = async (req: Request, res: Response, next: NextFunction) => {
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { email, password } = req.body;
 
 	if (!email || !password) {
-		return res.status(400).json({ error: "Email and password are required" });
+		res.status(400).json({ error: "Email and password are required" });
+		return;
 	}
 
 	try {
@@ -30,22 +31,25 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 	}
 };
 
-export const login = async (req: Request, res: Response, next: NextFunction) => {
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { email, password } = req.body;
 
 	if (!email || !password) {
-		return res.status(400).json({ error: "Email and password are required" });
+		 res.status(400).json({ error: "Email and password are required" });
+		return;
 	}
 
 	try {
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user || !user.password) {
-			return res.status(401).json({ error: "Invalid credentials" });
+			res.status(401).json({ error: "Invalid credentials" });
+			return;
 		}
 
 		const isMatch = await bcrypt.compare(password, user.password);
 		if (!isMatch) {
-			return res.status(401).json({ error: "Invalid credentials" });
+			res.status(401).json({ error: "Invalid credentials" });
+			return;
 		}
 
 		const jwtToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || "your-secret-key", { expiresIn: "1h" });
@@ -56,11 +60,12 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 	}
 };
 
-export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
+export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { idToken } = req.body;
 
 	if (!idToken) {
-		return res.status(400).json({ error: "No ID token provided" });
+		res.status(400).json({ error: "No ID token provided" });
+		return;
 	}
 
 	try {

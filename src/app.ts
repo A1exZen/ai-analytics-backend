@@ -5,7 +5,7 @@ import { config } from "./config/env.js";
 import analysisRoutes from "./routes/analysisRoutes.js";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/authRoutes.js";
-
+import { Request, Response, NextFunction } from "express";
 const requestLogger = (req: express.Request, res: express.Response, next: express.NextFunction) => {
 	logger.info(`${req.method} ${req.url} - Request received`);
 	res.on("finish", () => {
@@ -19,6 +19,11 @@ const app = express();
 app.use(requestLogger);
 app.use(cors());
 app.use(express.json());
+
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+	logger.error(`Unhandled error: ${err.message}`);
+	res.status(500).json({ error: "Internal server error" });
+});
 
 app.use(
 	rateLimit({

@@ -10,12 +10,13 @@ declare global {
 	}
 }
 
-export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const authHeader = req.headers.authorization;
 
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
 		logger.warn("No token provided in request");
-		return res.status(401).json({ error: "No token provided" });
+		res.status(401).json({ error: "No token provided" });
+		return;
 	}
 
 	const token = authHeader.split("Bearer ")[1];

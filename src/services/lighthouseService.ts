@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import lighthouse from "lighthouse";
+import lighthouse, { RunnerResult } from "lighthouse";
 import logger from "../utils/logger.js";
 import { LighthouseResult } from "../models/Analysis.js";
 
@@ -8,11 +8,14 @@ export const getLighthouseAnalysis = async (url: string): Promise<LighthouseResu
 		logger.info(`Starting Lighthouse analysis for URL: ${url}`);
 
 		const browser = await puppeteer.launch({
-			headless: "new",
+			headless: true,
 			args: ["--no-sandbox", "--disable-setuid-sandbox"],
 		});
 
-		const { port } = new URL(browser.wsEndpoint());
+		const wsEndpoint = browser.wsEndpoint();
+		const urlObject = new URL(wsEndpoint);
+		const port = parseInt(urlObject.port);
+
 		const lighthouseConfig = {
 			extends: "lighthouse:default",
 			settings: {
@@ -20,18 +23,23 @@ export const getLighthouseAnalysis = async (url: string): Promise<LighthouseResu
 			},
 		};
 
-		const { lhr } = await lighthouse(url, {
-			port: parseInt(port),
+		const result = await lighthouse(url, {
+			port,
 			output: "json",
 			logLevel: "info",
 		}, lighthouseConfig);
 
-		await browser.close();
+		if (!result) {
+			await browser.close();
+			throw new Error("Lighthouse returned undefined result.");
+		}
 
-		const performance = Math.round(lhr.categories.performance.score * 100);
-		const accessibility = Math.round(lhr.categories.accessibility.score * 100);
-		const bestPractices = Math.round(lhr.categories["best-practices"].score * 100);
-		const seo = Math.round(lhr.categories.seo.score * 100);
+		const { lhr } = result;
+
+		const performance = Math.round((lhr.categories.performance.score ?? 0) * 100);
+		const accessibility = Math.round((lhr.categories.accessibility.score ?? 0) * 100);
+		const bestPractices = Math.round((lhr.categories["best-practices"].score ?? 0) * 100);
+		const seo = Math.round((lhr.categories.seo.score ?? 0) * 100);
 
 		const metrics = {
 			firstContentfulPaint: lhr.audits["first-contentful-paint"]?.displayValue || "N/A",
@@ -41,7 +49,7 @@ export const getLighthouseAnalysis = async (url: string): Promise<LighthouseResu
 			speedIndex: lhr.audits["speed-index"]?.displayValue || "N/A",
 		};
 
-		const result: LighthouseResult = {
+		const resultObj: LighthouseResult = {
 			performance,
 			accessibility,
 			bestPractices,
@@ -49,8 +57,9 @@ export const getLighthouseAnalysis = async (url: string): Promise<LighthouseResu
 			metrics,
 		};
 
+		await browser.close();
 		logger.info(`Lighthouse analysis completed for URL: ${url}`);
-		return result;
+		return resultObj;
 	} catch (error) {
 		logger.error(`Error during Lighthouse analysis for URL ${url}: ${(error as Error).message}`);
 		throw new Error(`Failed to perform Lighthouse analysis: ${(error as Error).message}`);
