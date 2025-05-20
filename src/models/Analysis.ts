@@ -169,17 +169,9 @@ export interface LighthouseMetrics {
 	speedIndex: string;
 }
 
-export interface LighthouseResult {
-	performance: number;
-	accessibility: number;
-	bestPractices: number;
-	seo: number;
-	metrics: LighthouseMetrics;
-}
 
 
 export interface AnalysisResponse {
 	pageSpeed: PageSpeedResult;
 	openAIAnalysis: OpenAIAnalysis;
-	lighthouse: LighthouseResult;
 }
