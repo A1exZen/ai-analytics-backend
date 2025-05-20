@@ -8,6 +8,4 @@ router.post("/analyze", authenticate, analyze);
 router.get("/analyze/:id", authenticate, getAnalysis);
 router.get("/analyze", authenticate, getHistory);
 
-
-
 export default router;
