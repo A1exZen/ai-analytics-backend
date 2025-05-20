@@ -17,10 +17,7 @@ const requestLogger = (req: express.Request, res: express.Response, next: expres
 const app = express();
 
 app.use(requestLogger);
-app.use(cors({
-	origin: "https://your-frontend.up.railway.app",
-	credentials: true,
-}));
+app.use(cors());
 app.use(express.json());
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
