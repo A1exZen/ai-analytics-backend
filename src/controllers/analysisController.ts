@@ -1,48 +1,53 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import logger from "../utils/logger.js";
-import { analyzeWebsite } from "../services/analysisService.js";
+import {
+	startWebsiteAnalysis
+} from "../services/analysisService.js";
 import { AnalysisResponse } from "../models/Analysis.js";
 import prisma from "../db.js";
+import {Task} from "../types/task.js";
+import {taskService} from "../services/taskService.js";
 
-const AnalyzeRequestSchema = z.object({
-	query: z.string().url("Некорректный URL"),
-});
-
-interface AppError extends Error {
-	statusCode: number;
-	message: string;
+interface StartAnalysisRequestBody {
+	query: string;
 }
 
-const createAppError = (message: string, statusCode: number): AppError => {
-	const error = new Error(message) as AppError;
-	error.statusCode = statusCode;
-	return error;
+interface StartAnalysisResponse {
+	taskId: string;
+}
+
+interface TaskStatusResponse extends Task {
+	status: "pending" | "completed" | "failed";
+	result?: AnalysisResponse;
+	error?: string;
+}
+
+export const startAnalysis = async (req: Request<{}, {}, StartAnalysisRequestBody>, res: Response<StartAnalysisResponse>) => {
+	try {
+		const { query } = req.body;
+		const { taskId } = await startWebsiteAnalysis(query, req);
+		res.status(202).json({ taskId });
+	} catch (error: unknown) {
+		const err = error as { statusCode?: number; message: string };
+		logger.error(`Error starting analysis: ${err.message}`);
+		res.status(err.statusCode || 500).json();
+	}
 };
 
-export const analyze: (req: Request, res: Response, next: NextFunction) => void = async (
-	req: Request,
-	res: Response,
-	next: NextFunction
-) => {
+export const getTaskStatus = async (req: Request<{ id: string }>, res: Response<TaskStatusResponse>) => {
 	try {
-		const { query } = AnalyzeRequestSchema.parse(req.body);
-
-		logger.info(`Analyzing website: ${query}`);
-		const { id, data } = await analyzeWebsite(query, req);
-
-		logger.info(`Analysis completed for: ${query} with ID: ${id}`);
-		res.status(200).json({ id, data });
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			logger.warn(`Validation error: ${error.message}`);
-			res.status(400).json({ error: "Некорректный запрос", details: error.errors });
+		const { id } = req.params;
+		const task = taskService.getTask(id);
+		if (!task) {
+			res.status(404).json();
 			return;
 		}
-
-		const appError = error instanceof Error ? createAppError(error.message, 500) : createAppError("Ошибка при анализе сайта", 500);
-		logger.error(`Controller error: ${appError.message}`);
-		res.status(appError.statusCode).json({ error: appError.message });
+		res.status(200).json(task);
+	} catch (error: unknown) {
+		const err = error as { message: string };
+		logger.error(`Error getting task status: ${err.message}`);
+		res.status(500).json();
 	}
 };
 
