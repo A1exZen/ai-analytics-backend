@@ -35,6 +35,7 @@ app.use(
 app.use("/api", analysisRoutes);
 app.use("/auth", authRoutes)
 
-app.listen(config.port, () => {
-	logger.info(`Listening on port ${config.port}`);
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+	logger.info(`Listening on port ${PORT}`);
 });
