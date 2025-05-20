@@ -7,7 +7,7 @@ import logger from "../utils/logger.js";
 import prisma from "../db.js";
 import {v4 as uuidv4} from "uuid";
 import {Request} from "express";
-import {getLighthouseAnalysis} from "./lighthouseService.js";
+// import {getLighthouseAnalysis} from "./lighthouseService.js";
 
 interface AppError extends Error {
 	statusCode: number;
@@ -41,25 +41,25 @@ export const analyzeWebsite = async (url: string, req: Request): Promise<{
 			openAIAnalysis = getDefaultAnalysis(url);
 		}
 
-		let lighthouseResult;
-		try {
-			lighthouseResult = await getLighthouseAnalysis(url);
-		} catch (error) {
-			logger.error(`Error fetching Lighthouse analysis for URL ${url}: ${(error as Error).message}`);
-			lighthouseResult = {
-				performance: 0,
-				accessibility: 0,
-				bestPractices: 0,
-				seo: 0,
-				metrics: {
-					firstContentfulPaint: "N/A",
-					largestContentfulPaint: "N/A",
-					totalBlockingTime: "N/A",
-					cumulativeLayoutShift: "N/A",
-					speedIndex: "N/A",
-				},
-			};
-		}
+		// let lighthouseResult;
+		// try {
+		// 	lighthouseResult = await getLighthouseAnalysis(url);
+		// } catch (error) {
+		// 	logger.error(`Error fetching Lighthouse analysis for URL ${url}: ${(error as Error).message}`);
+		// 	lighthouseResult = {
+		// 		performance: 0,
+		// 		accessibility: 0,
+		// 		bestPractices: 0,
+		// 		seo: 0,
+		// 		metrics: {
+		// 			firstContentfulPaint: "N/A",
+		// 			largestContentfulPaint: "N/A",
+		// 			totalBlockingTime: "N/A",
+		// 			cumulativeLayoutShift: "N/A",
+		// 			speedIndex: "N/A",
+		// 		},
+		// 	};
+		// }
 
 		// let securityHeadersResult;
 		// try {
@@ -88,8 +88,7 @@ export const analyzeWebsite = async (url: string, req: Request): Promise<{
 
 		const analysisData: AnalysisResponse = {
 			pageSpeed: pageSpeedResult,
-			openAIAnalysis,
-			lighthouse: lighthouseResult,
+			openAIAnalysis
 		};
 
 		const id = uuidv4();
